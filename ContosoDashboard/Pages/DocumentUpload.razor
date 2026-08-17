@@ -1,0 +1,110 @@
+@page "/documents/upload"
+@using System.IO
+@using Microsoft.AspNetCore.Components.Forms
+@using ContosoDashboard.Models
+@using ContosoDashboard.Services.Interfaces
+@inject IDocumentService DocumentService
+@inject NavigationManager Navigation
+
+<PageTitle>Upload Document - Contoso Dashboard</PageTitle>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Upload Document</h4>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="alert alert-danger">@ErrorMessage</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(SuccessMessage))
+                    {
+                        <div class="alert alert-success">@SuccessMessage</div>
+                    }
+
+                    <form @onsubmit="HandleSubmit">
+                        <div class="mb-3">
+                            <label class="form-label">Title *</label>
+                            <input type="text" class="form-control" @bind="Title" maxlength="200" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="3" @bind="Description"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" @bind="Category">
+                                <option value="">-- Select --</option>
+                                <option value="Reports">Reports</option>
+                                <option value="Invoices">Invoices</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">File *</label>
+                            <input type="file" class="form-control" />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" disabled="@(IsUploading || string.IsNullOrEmpty(Title))">
+                                @if (IsUploading) { <span>Uploading...</span> } else { <span>Upload</span> }
+                            </button>
+                            <button type="button" class="btn btn-secondary" @onclick="Cancel" disabled="@IsUploading">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string Title = string.Empty;
+    private string Description = string.Empty;
+    private string Category = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private string SuccessMessage = string.Empty;
+    private bool IsUploading = false;
+
+    private async Task HandleSubmit()
+    {
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(Title))
+        {
+            ErrorMessage = "Title is required.";
+            return;
+        }
+
+        try
+        {
+            IsUploading = true;
+            await Task.Delay(1000);
+            SuccessMessage = "Document uploaded successfully!";
+            await Task.Delay(2000);
+            Navigation.NavigateTo("/documents");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Upload failed: {ex.Message}";
+        }
+        finally
+        {
+            IsUploading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/documents");
+    }
+}

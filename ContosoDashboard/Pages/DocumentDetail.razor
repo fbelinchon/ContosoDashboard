@@ -1,0 +1,120 @@
+@page "/documents/{DocumentId:int}"
+@using ContosoDashboard.Models
+@using ContosoDashboard.Services.Interfaces
+@inject IDocumentService DocumentService
+@inject NavigationManager Navigation
+
+<PageTitle>Document Detail - Contoso Dashboard</PageTitle>
+
+<div class="container-fluid mt-4">
+    @if (IsLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status"></div>
+        </div>
+    }
+    else if (CurrentDoc == null)
+    {
+        <div class="alert alert-danger">Document not found or access denied.</div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>@CurrentDoc.Title</h2>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-danger" @onclick="DeleteDoc">Delete</button>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger">@ErrorMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h5>Document Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">File Size:</dt>
+                    <dd class="col-sm-8">@FormatBytes(CurrentDoc.FileSize)</dd>
+                    <dt class="col-sm-4">Category:</dt>
+                    <dd class="col-sm-8">@(CurrentDoc.Category ?? "N/A")</dd>
+                    <dt class="col-sm-4">Uploaded:</dt>
+                    <dd class="col-sm-8">@CurrentDoc.UploadDate.ToString("G")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="/documents" class="btn btn-secondary">Back</a>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int DocumentId { get; set; }
+
+    private Document CurrentDoc;
+    private bool IsLoading = false;
+    private string ErrorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDocument();
+    }
+
+    private async Task LoadDocument()
+    {
+        try
+        {
+            IsLoading = true;
+            CurrentDoc = await DocumentService.GetDocumentAsync(DocumentId, 1);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task DeleteDoc()
+    {
+        try
+        {
+            var success = await DocumentService.DeleteDocumentAsync(DocumentId, 1);
+            if (success)
+            {
+                Navigation.NavigateTo("/documents");
+            }
+            else
+            {
+                ErrorMessage = "Delete failed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private string FormatBytes(long bytes)
+    {
+        string[] sizes = new[] { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len /= 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+}

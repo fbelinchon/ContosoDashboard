@@ -22,6 +22,9 @@ public class User
     [MaxLength(100)]
     public string? JobTitle { get; set; }
 
+    [MaxLength(500)]
+    public string? Hobbies { get; set; }
+
     [Required]
     public UserRole Role { get; set; } = UserRole.Employee;
 
@@ -48,6 +51,11 @@ public class User
     public virtual ICollection<ProjectMember> ProjectMemberships { get; set; } = new List<ProjectMember>();
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     public virtual ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
+    
+    // Document Upload & Management Feature
+    public virtual ICollection<Document> UploadedDocuments { get; set; } = new List<Document>();
+    public virtual ICollection<DocumentAuditLog> DocumentAuditLogs { get; set; } = new List<DocumentAuditLog>();
+    public virtual ICollection<UserStorageQuota> StorageQuotas { get; set; } = new List<UserStorageQuota>();
 }
 
 public enum UserRole

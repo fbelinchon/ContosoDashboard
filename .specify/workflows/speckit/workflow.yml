@@ -33,7 +33,7 @@ inputs:
     prompt: "Describe what you want to build"
   integration:
     type: string
-    default: "auto"
+    default: "copilot"
     prompt: "Integration to use (e.g. claude, copilot, gemini; 'auto' uses the project's initialized integration)"
   scope:
     type: string

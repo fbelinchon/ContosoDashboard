@@ -1,0 +1,113 @@
+@page "/documents"
+@using ContosoDashboard.Models
+@using ContosoDashboard.Services.Interfaces
+@inject IDocumentService DocumentService
+@inject NavigationManager Navigation
+
+<PageTitle>Documents - Contoso Dashboard</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Documents</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/documents/upload" class="btn btn-primary">+ Upload Document</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger">@ErrorMessage</div>
+    }
+
+    @if (IsLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status"></div>
+        </div>
+    }
+    else if (DocList.Count == 0)
+    {
+        <div class="alert alert-info">No documents found. <a href="/documents/upload">Upload your first document</a></div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Size</th>
+                        <th>Uploaded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in DocList)
+                    {
+                        <tr @key="doc.DocumentId">
+                            <td>
+                                <a href="/documents/@doc.DocumentId">@doc.Title</a>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(doc.Category))
+                                {
+                                    <span class="badge bg-info">@doc.Category</span>
+                                }
+                            </td>
+                            <td>@FormatBytes(doc.FileSize)</td>
+                            <td>@doc.UploadDate.ToString("g")</td>
+                            <td>
+                                <a href="/documents/@doc.DocumentId" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Document> DocList = [];
+    private bool IsLoading = false;
+    private string ErrorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDocuments();
+    }
+
+    private async Task LoadDocuments()
+    {
+        try
+        {
+            IsLoading = true;
+            // TODO: Get userId from authenticated user (currently hardcoded to 1)
+            DocList = await DocumentService.ListDocumentsAsync(userId: 1);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private string FormatBytes(long bytes)
+    {
+        string[] sizes = ["B", "KB", "MB", "GB"];
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len /= 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+}
