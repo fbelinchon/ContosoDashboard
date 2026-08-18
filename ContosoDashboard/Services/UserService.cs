@@ -113,6 +113,18 @@ public class UserService : IUserService
         existingUser.EmailNotificationsEnabled = user.EmailNotificationsEnabled;
         existingUser.InAppNotificationsEnabled = user.InAppNotificationsEnabled;
 
+        // Only allow updating IsInternalUser if the requesting user is an Administrator
+        var requestingUser = await _context.Users.FindAsync(requestingUserId);
+        if (requestingUser?.Role == UserRole.Administrator)
+        {
+            // Prevent external users from being Administrators
+            if (!user.IsInternalUser && existingUser.Role == UserRole.Administrator)
+            {
+                return false; // Cannot set external users as Administrators
+            }
+            existingUser.IsInternalUser = user.IsInternalUser;
+        }
+
         await _context.SaveChangesAsync();
         return true;
     }

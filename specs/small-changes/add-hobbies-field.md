@@ -16,6 +16,7 @@ Add a "Hobbies" text field to the user profile that allows employees to enter an
 | `Models/User.cs` | Will be modified — add `Hobbies` property |
 | `Data/ApplicationDbContext.cs` | Context — DbSet already exists for Users |
 | `Pages/Profile.razor` | Will be modified — add hobbies input field in form |
+| `Pages/Team.razor` | Will be modified — display hobbies in team member cards |
 | `Services/UserService.cs` | Context — used to save/load user data |
 | `Data/Migrations/[timestamp]_AddUserHobbiesField.cs` | Will be created — EF Core migration |
 
@@ -24,17 +25,19 @@ Add a "Hobbies" text field to the user profile that allows employees to enter an
 1. Add a `Hobbies` field to the `User` model with a maximum length of 500 characters
 2. Display the hobbies field in the Profile page form with a textarea input
 3. Allow users to edit and save their hobbies through the Profile form
-4. Create an EF Core migration to add the database column
-5. Hobbies field should be optional (nullable)
+4. Display hobbies in team member cards on the Team page for better member discovery
+5. Create an EF Core migration to add the database column
+6. Hobbies field should be optional (nullable)
 
 ## Plan
 
 1. Add `Hobbies` string property to `Models/User.cs` with `[MaxLength(500)]` attribute
 2. Create EF Core migration: `dotnet ef migrations add AddUserHobbiesField`
 3. Add textarea input for hobbies in `Pages/Profile.razor` after Job Title field
-4. Update the migration context in `Data/ApplicationDbContext.cs` (if needed)
-5. Test the form submission and data persistence
-6. Apply migration: `dotnet ef database update`
+4. Display hobbies in team member cards on `Pages/Team.razor` (below job title or in card footer)
+5. Update the migration context in `Data/ApplicationDbContext.cs` (if needed)
+6. Test the form submission and data persistence
+7. Apply migration: `dotnet ef database update`
 
 ## Tasks
 
@@ -42,6 +45,7 @@ Add a "Hobbies" text field to the user profile that allows employees to enter an
 - [x] Create EF Core migration for new database column
 - [x] Add hobbies textarea field to Profile.razor form
 - [x] Add character counter/display to hobbies field
+- [x] Display hobbies in team member cards on Team.razor
 - [x] Test profile save with hobbies data
 - [x] Verify database column created successfully
 - [x] Run build to confirm no errors
@@ -52,6 +56,7 @@ Add a "Hobbies" text field to the user profile that allows employees to enter an
 - [x] Build succeeds with 0 errors
 - [x] Profile page displays hobbies field
 - [x] User can save and retrieve hobbies
+- [x] Team page displays hobbies in member cards
 - [x] No validation errors on form submission
 - [x] Database migration applies cleanly
 

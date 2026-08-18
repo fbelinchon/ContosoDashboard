@@ -86,6 +86,27 @@
                                 </label>
                             </div>
 
+                            @if (isCurrentUserAdmin)
+                            {
+                                <h6 class="mt-4">User Type</h6>
+
+                                <div class="form-check mb-3">
+                                    <InputCheckbox class="form-check-input" @bind-Value="user.IsInternalUser" id="internalUser" />
+                                    <label class="form-check-label" for="internalUser">
+                                        Internal User (uncheck for external users)
+                                    </label>
+                                </div>
+                            }
+                            else
+                            {
+                                <h6 class="mt-4">User Type</h6>
+                                <div class="mb-3">
+                                    <span class="badge bg-@(user.IsInternalUser ? "success" : "warning")">
+                                        @(user.IsInternalUser ? "Internal User" : "External User")
+                                    </span>
+                                </div>
+                            }
+
                             <button type="submit" class="btn btn-primary">Save Changes</button>
                             @if (showSuccessMessage)
                             {
@@ -144,6 +165,7 @@
     private User? user;
     private bool showSuccessMessage = false;
     private int currentUserId = 0;
+    private bool isCurrentUserAdmin = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -159,6 +181,9 @@
         if (currentUserId > 0)
         {
             user = await UserService.GetUserByIdAsync(currentUserId);
+            // Check if current user is Administrator
+            var currentUser = await UserService.GetUserByIdAsync(currentUserId);
+            isCurrentUserAdmin = currentUser?.Role == UserRole.Administrator;
         }
     }
 

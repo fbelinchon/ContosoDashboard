@@ -44,6 +44,9 @@ public class User
 
     public bool InAppNotificationsEnabled { get; set; } = true;
 
+    [Required]
+    public bool IsInternalUser { get; set; } = true;
+
     // Navigation properties
     public virtual ICollection<TaskItem> AssignedTasks { get; set; } = new List<TaskItem>();
     public virtual ICollection<TaskItem> CreatedTasks { get; set; } = new List<TaskItem>();

@@ -35,7 +35,7 @@ You **MUST** consider the user input before proceeding (if not empty). The user 
 3. **Generate tinyspec file**: Create a single file at `specs/tiny/{feature-name}.md` with this structure:
 
    ```markdown
-   # TinySpec: {Title}
+   # Small Change: {Title}
 
    **Branch**: {current-branch or new-branch-name}
    **Date**: {YYYY-MM-DD}
@@ -92,10 +92,15 @@ You **MUST** consider the user input before proceeding (if not empty). The user 
    | **Files affected** | {N} files |
 
    ## Next Steps
-   - Review the tinyspec at `specs/tiny/{feature-name}.md`
+   - Review the tinyspec at `specs/small-spec/{feature-name}.md`
    - Run `/speckit.tinyspec.implement` to build it
    - Or implement manually — the spec is your checklist
    ```
+## Questions
+- Ask question if the user input is unclear or missing details. For example:
+  - "Which page should the new button appear on?"
+  - "What should the default value be for this new field?"
+  - "Do you want to add unit tests for this change?"
 
 ## Rules
 

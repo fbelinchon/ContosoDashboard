@@ -71,6 +71,20 @@
                                 <strong>@member.Department</strong>
                             </div>
 
+                            <div class="mb-2">
+                                <span class="badge bg-@(member.IsInternalUser ? "success" : "warning")">
+                                    @(member.IsInternalUser ? "Internal" : "External")
+                                </span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(member.Hobbies))
+                            {
+                                <div class="mb-3 p-2 bg-light rounded">
+                                    <small class="text-muted">Hobbies:</small><br />
+                                    <small class="text-break">@member.Hobbies</small>
+                                </div>
+                            }
+
                             @if (!string.IsNullOrEmpty(member.Email))
                             {
                                 <div class="mt-3">
