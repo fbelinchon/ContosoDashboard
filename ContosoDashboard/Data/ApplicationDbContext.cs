@@ -24,6 +24,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<DocumentShare> DocumentShares { get; set; } = null!;
     public DbSet<DocumentAuditLog> DocumentAuditLogs { get; set; } = null!;
     public DbSet<UserStorageQuota> UserStorageQuotas { get; set; } = null!;
+    
+    // User Admin Management Feature
+    public DbSet<UserAuditLog> UserAuditLogs { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -171,6 +174,32 @@ public class ApplicationDbContext : DbContext
             .HasIndex(al => al.Action);
 
         modelBuilder.Entity<DocumentAuditLog>()
+            .HasIndex(al => al.Timestamp);
+
+        // Configure User Admin Management relationships
+        modelBuilder.Entity<UserAuditLog>()
+            .HasOne(al => al.User)
+            .WithMany(u => u.UserAuditLogs)
+            .HasForeignKey(al => al.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserAuditLog>()
+            .HasOne(al => al.AdminUser)
+            .WithMany(u => u.AdminAuditLogs)
+            .HasForeignKey(al => al.AdminUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // User Audit Log indexes for query performance
+        modelBuilder.Entity<UserAuditLog>()
+            .HasIndex(al => al.UserId);
+
+        modelBuilder.Entity<UserAuditLog>()
+            .HasIndex(al => al.AdminUserId);
+
+        modelBuilder.Entity<UserAuditLog>()
+            .HasIndex(al => al.Action);
+
+        modelBuilder.Entity<UserAuditLog>()
             .HasIndex(al => al.Timestamp);
 
         // Seed initial data

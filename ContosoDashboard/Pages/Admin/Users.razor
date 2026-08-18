@@ -1,0 +1,242 @@
+@page "/admin/users"
+@using ContosoDashboard.Services
+@using ContosoDashboard.Models
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@attribute [Authorize(Roles = "Administrator")]
+@inject IUserService UserService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Manage Users - ContosoDashboard</PageTitle>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>User Management</h1>
+            <p class="text-muted">Select a user to modify their internal/external status</p>
+        </div>
+    </div>
+
+    @if (!isAuthorized)
+    {
+        <div class="alert alert-danger">
+            <strong>Access Denied.</strong> Only administrators can access this page.
+        </div>
+    }
+    else if (allUsers == null)
+    {
+        <p><em>Loading users...</em></p>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Select User</h5>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Choose User</label>
+                            <select class="form-select" value="@selectedUserId" @onchange="OnUserSelected">
+                                @foreach (var user in allUsers)
+                                {
+                                    <option value="@user.UserId">@user.DisplayName (@user.Role)</option>
+                                }
+                            </select>
+                        </div>
+
+                        @if (selectedUser != null)
+                        {
+                            <div>
+                                <h5 class="mt-4 mb-3">User Profile (Read-only)</h5>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Display Name</label>
+                                    <input type="text" class="form-control" value="@selectedUser.DisplayName" disabled />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" value="@selectedUser.Email" disabled />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" class="form-control" value="@(selectedUser.Department ?? "-")" disabled />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Job Title</label>
+                                    <input type="text" class="form-control" value="@(selectedUser.JobTitle ?? "-")" disabled />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="form-control" value="@(selectedUser.PhoneNumber ?? "-")" disabled />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Role</label>
+                                    <input type="text" class="form-control" value="@selectedUser.Role" disabled />
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label">Availability Status</label>
+                                    <input type="text" class="form-control" value="@selectedUser.AvailabilityStatus" disabled />
+                                </div>
+
+                                <hr />
+
+                                <h5 class="mt-4 mb-3">User Type</h5>
+
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" 
+                                           class="form-check-input" 
+                                           id="isInternal"
+                                           checked="@editingUser.IsInternalUser"
+                                           @onchange="OnCheckboxChanged" />
+                                    <label class="form-check-label" for="isInternal">
+                                        Internal User
+                                    </label>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(errorMessage))
+                                {
+                                    <div class="alert alert-danger mt-3">
+                                        @errorMessage
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(successMessage))
+                                {
+                                    <div class="alert alert-success mt-3">
+                                        @successMessage
+                                    </div>
+                                }
+
+                                <button type="button" 
+                                        class="btn btn-primary mt-3" 
+                                        @onclick="HandleSave" 
+                                        disabled="@(!isFormDirty)">
+                                    Save Changes
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<User> allUsers = null;
+    private User selectedUser = null;
+    private User editingUser = null;
+    private int currentUserId = 0;
+    private int selectedUserId = 0;
+    private bool isAuthorized = false;
+    private bool isFormDirty = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current user
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var authUser = authState.User;
+
+        // Check if user is Administrator
+        if (!authUser.IsInRole("Administrator"))
+        {
+            isAuthorized = false;
+            return;
+        }
+
+        isAuthorized = true;
+
+        // Get current user ID
+        var userIdClaim = authUser.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+        {
+            currentUserId = userId;
+        }
+
+        // Load all users
+        allUsers = await UserService.GetAllUsersAsync();
+
+        // Select current user by default
+        if (allUsers.Any())
+        {
+            var userToSelect = allUsers.FirstOrDefault(u => u.UserId == currentUserId) ?? allUsers.First();
+            await SelectUser(userToSelect);
+        }
+    }
+
+    private async Task OnUserSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out int userId))
+        {
+            var user = allUsers.FirstOrDefault(u => u.UserId == userId);
+            if (user != null)
+            {
+                await SelectUser(user);
+            }
+        }
+    }
+
+    private Task SelectUser(User user)
+    {
+        selectedUser = user;
+        selectedUserId = user.UserId;
+        editingUser = new User
+        {
+            UserId = user.UserId,
+            IsInternalUser = user.IsInternalUser
+        };
+        isFormDirty = false;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private void OnCheckboxChanged(ChangeEventArgs e)
+    {
+        bool newValue = (bool)e.Value;
+        editingUser.IsInternalUser = newValue;
+        isFormDirty = newValue != selectedUser.IsInternalUser;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+    }
+
+    private async Task HandleSave()
+    {
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+
+        // Validate: cannot set Administrator as external
+        if (!editingUser.IsInternalUser && selectedUser.Role == UserRole.Administrator)
+        {
+            errorMessage = "No es posible indicar un administrador como externo";
+            return;
+        }
+
+        // Call service to update
+        var result = await UserService.UpdateUserIsInternalAsync(editingUser.UserId, editingUser.IsInternalUser, currentUserId);
+        
+        if (result)
+        {
+            selectedUser.IsInternalUser = editingUser.IsInternalUser;
+            isFormDirty = false;
+            successMessage = "Usuario actualizado correctamente";
+            
+            // Auto-hide success message after 3 seconds
+            await Task.Delay(3000);
+            successMessage = string.Empty;
+        }
+        else
+        {
+            errorMessage = "Error updating user. Please try again.";
+        }
+    }
+}

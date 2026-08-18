@@ -59,6 +59,10 @@ public class User
     public virtual ICollection<Document> UploadedDocuments { get; set; } = new List<Document>();
     public virtual ICollection<DocumentAuditLog> DocumentAuditLogs { get; set; } = new List<DocumentAuditLog>();
     public virtual ICollection<UserStorageQuota> StorageQuotas { get; set; } = new List<UserStorageQuota>();
+    
+    // User Admin Management Feature
+    public virtual ICollection<UserAuditLog> UserAuditLogs { get; set; } = new List<UserAuditLog>();
+    public virtual ICollection<UserAuditLog> AdminAuditLogs { get; set; } = new List<UserAuditLog>();
 }
 
 public enum UserRole

@@ -13,6 +13,7 @@ public interface IUserService
     Task<bool> UpdateAvailabilityStatusAsync(int userId, AvailabilityStatus status);
     Task<List<User>> GetTeamMembersAsync(int userId);
     Task<List<User>> GetAllUsersAsync();
+    Task<bool> UpdateUserIsInternalAsync(int userId, bool isInternal, int adminUserId);
 }
 
 public class UserService : IUserService
@@ -157,5 +158,50 @@ public class UserService : IUserService
         return await _context.Users
             .OrderBy(u => u.DisplayName)
             .ToListAsync();
+    }
+
+    public async Task<bool> UpdateUserIsInternalAsync(int userId, bool isInternal, int adminUserId)
+    {
+        // Verify requesting user is an Administrator
+        var adminUser = await _context.Users.FindAsync(adminUserId);
+        if (adminUser?.Role != UserRole.Administrator)
+        {
+            return false; // Not authorized
+        }
+
+        var userToUpdate = await _context.Users.FindAsync(userId);
+        if (userToUpdate == null)
+        {
+            return false; // User not found
+        }
+
+        // Prevent marking Administrators as external
+        if (!isInternal && userToUpdate.Role == UserRole.Administrator)
+        {
+            return false; // Cannot mark admin as external
+        }
+
+        // Store old value for audit log
+        bool oldValue = userToUpdate.IsInternalUser;
+        
+        // Update the field
+        userToUpdate.IsInternalUser = isInternal;
+        
+        // Create audit log entry
+        var auditLog = new UserAuditLog
+        {
+            UserId = userId,
+            AdminUserId = adminUserId,
+            Action = "UpdateIsInternalUser",
+            Timestamp = DateTime.UtcNow,
+            OldValue = oldValue.ToString(),
+            NewValue = isInternal.ToString(),
+            Result = "Success",
+            Details = $"Administrator {adminUser.DisplayName} changed IsInternalUser from {oldValue} to {isInternal}"
+        };
+        
+        _context.UserAuditLogs.Add(auditLog);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }
